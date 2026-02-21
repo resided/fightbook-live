@@ -14,7 +14,130 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      fighters: {
+        Row: {
+          best_streak: number
+          created_at: string
+          defense: number
+          elo_rating: number
+          id: string
+          ko_losses: number
+          ko_wins: number
+          losses: number
+          name: string
+          power: number
+          speed: number
+          stamina: number
+          style: string
+          sub_wins: number
+          technique: number
+          total_fights: number
+          win_streak: number
+          wins: number
+        }
+        Insert: {
+          best_streak?: number
+          created_at?: string
+          defense: number
+          elo_rating?: number
+          id?: string
+          ko_losses?: number
+          ko_wins?: number
+          losses?: number
+          name: string
+          power: number
+          speed: number
+          stamina: number
+          style: string
+          sub_wins?: number
+          technique: number
+          total_fights?: number
+          win_streak?: number
+          wins?: number
+        }
+        Update: {
+          best_streak?: number
+          created_at?: string
+          defense?: number
+          elo_rating?: number
+          id?: string
+          ko_losses?: number
+          ko_wins?: number
+          losses?: number
+          name?: string
+          power?: number
+          speed?: number
+          stamina?: number
+          style?: string
+          sub_wins?: number
+          technique?: number
+          total_fights?: number
+          win_streak?: number
+          wins?: number
+        }
+        Relationships: []
+      }
+      fights: {
+        Row: {
+          created_at: string
+          fighter_a_id: string
+          fighter_b_id: string
+          finish_round: number
+          id: string
+          method: string
+          narration: string | null
+          round_data: Json | null
+          total_rounds: number
+          winner_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          fighter_a_id: string
+          fighter_b_id: string
+          finish_round: number
+          id?: string
+          method: string
+          narration?: string | null
+          round_data?: Json | null
+          total_rounds?: number
+          winner_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          fighter_a_id?: string
+          fighter_b_id?: string
+          finish_round?: number
+          id?: string
+          method?: string
+          narration?: string | null
+          round_data?: Json | null
+          total_rounds?: number
+          winner_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fights_fighter_a_id_fkey"
+            columns: ["fighter_a_id"]
+            isOneToOne: false
+            referencedRelation: "fighters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fights_fighter_b_id_fkey"
+            columns: ["fighter_b_id"]
+            isOneToOne: false
+            referencedRelation: "fighters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fights_winner_id_fkey"
+            columns: ["winner_id"]
+            isOneToOne: false
+            referencedRelation: "fighters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

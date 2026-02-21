@@ -1,1 +1,4 @@
 project_id = "biacmrleduxtwfcxbmkh"
+
+[functions.simulate-fight]
+verify_jwt = false
