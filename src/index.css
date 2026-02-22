@@ -144,3 +144,127 @@
 .progress-glow {
   box-shadow: 0 0 8px hsl(36 100% 50% / 0.4), inset 0 0 4px hsl(36 100% 50% / 0.2);
 }
+
+/* ═══ PIXEL FIGHT ARENA ═══ */
+
+.fight-arena {
+  border: 1px solid hsl(var(--border));
+  background: hsl(0 0% 2%);
+  border-radius: 2px;
+  overflow: hidden;
+  image-rendering: pixelated;
+}
+
+.arena-bg {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 10px,
+      hsl(var(--border) / 0.1) 10px,
+      hsl(var(--border) / 0.1) 11px
+    ),
+    linear-gradient(180deg, hsl(0 0% 3%), hsl(0 0% 6%));
+}
+
+/* Pixel colors */
+.pixel-primary {
+  background: hsl(var(--primary));
+  box-shadow: 0 0 2px hsl(var(--primary) / 0.5);
+}
+
+.pixel-accent {
+  background: hsl(var(--accent));
+  box-shadow: 0 0 2px hsl(var(--accent) / 0.5);
+}
+
+/* Fighter animations */
+@keyframes pixel-idle-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes pixel-punch-lunge {
+  0% { transform: translateX(0); }
+  30% { transform: translateX(16px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes pixel-kick-lunge {
+  0% { transform: translateX(0) rotate(0deg); }
+  30% { transform: translateX(12px) rotate(5deg); }
+  100% { transform: translateX(0) rotate(0deg); }
+}
+
+@keyframes pixel-hit-recoil {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(8px); }
+  40% { transform: translateX(-4px); filter: brightness(2); }
+  100% { transform: translateX(0); filter: brightness(1); }
+}
+
+@keyframes pixel-knockdown-fall {
+  0% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(8px) rotate(15deg); }
+  100% { transform: translateY(4px) rotate(10deg); }
+}
+
+@keyframes pixel-takedown-grapple {
+  0% { transform: translateX(0) translateY(0); }
+  40% { transform: translateX(10px) translateY(6px); }
+  100% { transform: translateX(6px) translateY(4px); }
+}
+
+@keyframes pixel-block-brace {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-3px); }
+}
+
+@keyframes pixel-victory-bounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  25% { transform: translateY(-8px) scale(1.1); }
+  50% { transform: translateY(0) scale(1); }
+  75% { transform: translateY(-5px) scale(1.05); }
+}
+
+@keyframes pixel-impact-flash {
+  0% { transform: scale(0); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+.pixel-fighter-idle {
+  animation: pixel-idle-bob 1.2s ease-in-out infinite;
+}
+
+.pixel-fighter-punch {
+  animation: pixel-punch-lunge 0.4s ease-out;
+}
+
+.pixel-fighter-kick {
+  animation: pixel-kick-lunge 0.5s ease-out;
+}
+
+.pixel-fighter-hit {
+  animation: pixel-hit-recoil 0.5s ease-out;
+}
+
+.pixel-fighter-knockdown {
+  animation: pixel-knockdown-fall 0.6s ease-out forwards;
+}
+
+.pixel-fighter-takedown {
+  animation: pixel-takedown-grapple 0.5s ease-out forwards;
+}
+
+.pixel-fighter-block {
+  animation: pixel-block-brace 0.4s ease-out;
+}
+
+.pixel-fighter-victory {
+  animation: pixel-victory-bounce 0.8s ease-out infinite;
+}
+
+.pixel-impact {
+  animation: pixel-impact-flash 0.5s ease-out forwards;
+}
