@@ -35,7 +35,7 @@ serve(async (req) => {
 
     const systemPrompt = `You are a professional MMA fight commentator and simulator AI. You simulate realistic MMA fights based on fighter stats.
 
-Given two fighters with their stats (power, speed, defense, stamina, technique on a 30-99 scale), simulate a complete fight.
+Given two fighters with their stats (power, speed, defense, stamina, technique on a 30-99 scale), simulate a complete fight with DETAILED play-by-play commentary.
 
 IMPORTANT RULES:
 - Higher stats give advantages but don't guarantee wins. Upsets happen.
@@ -47,6 +47,9 @@ IMPORTANT RULES:
 - Most fights go to decision. KOs should be rare (maybe 20% of fights)
 - Submissions are more likely with high technique fighters
 - Be dramatic but realistic in narration
+- Each round MUST have 4-6 detailed play-by-play moments describing specific exchanges, strikes, takedowns, clinch work, etc.
+- Make each play-by-play moment vivid and specific (e.g. "Rodriguez lands a thunderous right hook that buckles the knees of Martinez")
+- Include time markers in each play-by-play (e.g. "1:23 into the round")
 
 You MUST respond with a JSON object using this EXACT tool call format.`;
 
@@ -114,8 +117,20 @@ Simulate a 5-round championship fight between these two.`,
                         fighter_a_score: { type: "integer", minimum: 7, maximum: 10 },
                         fighter_b_score: { type: "integer", minimum: 7, maximum: 10 },
                         highlight: { type: "string", description: "Key moment of the round in one sentence" },
+                        play_by_play: {
+                          type: "array",
+                          description: "4-6 detailed play-by-play moments for this round with time markers",
+                          items: {
+                            type: "object",
+                            properties: {
+                              time: { type: "string", description: "Time in the round, e.g. '0:45'" },
+                              action: { type: "string", description: "Vivid description of what happened" },
+                            },
+                            required: ["time", "action"],
+                          },
+                        },
                       },
-                      required: ["round", "fighter_a_score", "fighter_b_score", "highlight"],
+                      required: ["round", "fighter_a_score", "fighter_b_score", "highlight", "play_by_play"],
                     },
                   },
                 },
