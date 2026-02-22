@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, KeyboardEvent, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import FightArena from "./FightArena";
 
 const WELCOME_TEXT = [
   "",
@@ -26,8 +27,15 @@ const STYLES = [
 ];
 
 interface HistoryEntry {
-  type: "input" | "output" | "system" | "fight" | "error" | "loading";
+  type: "input" | "output" | "system" | "fight" | "error" | "loading" | "arena";
   text: string;
+  arenaProps?: {
+    fighterAName: string;
+    fighterBName: string;
+    round?: number;
+    action?: string;
+    isActive?: boolean;
+  };
 }
 
 interface Fighter {
@@ -66,6 +74,13 @@ const TerminalCLI = () => {
   const [createMode, setCreateMode] = useState<null | { step: string; data: Record<string, any> }>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [arenaState, setArenaState] = useState<{
+    fighterAName: string;
+    fighterBName: string;
+    round: number;
+    action: string;
+    isActive: boolean;
+  } | null>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo(0, scrollRef.current.scrollHeight);
@@ -359,7 +374,15 @@ const TerminalCLI = () => {
 
         addLines([{ type: "system", text: "" }]);
 
-        // Play-by-play round by round (~36s per round = ~3 min total)
+        // Activate the pixel arena
+        setArenaState({
+          fighterAName: result.fighter_a,
+          fighterBName: result.fighter_b,
+          round: 1,
+          action: "",
+          isActive: true,
+        });
+
         const totalRounds = result.rounds?.length || 5;
         const finishRound = result.finish_round || totalRounds;
 
@@ -368,6 +391,8 @@ const TerminalCLI = () => {
             const r = result.rounds[i];
             const isFinishRound = r.round === finishRound && result.method !== "Unanimous Decision" && result.method !== "Split Decision";
 
+            setArenaState((prev) => prev ? { ...prev, round: r.round, action: "" } : prev);
+
             addLines([
               { type: "fight", text: `\n  ══════════════════ ROUND ${r.round} ══════════════════` },
               { type: "system", text: "  🔔 Round begins!" },
@@ -375,31 +400,31 @@ const TerminalCLI = () => {
 
             await delay(2000);
 
-            // Play-by-play moments with delays
             const plays = r.play_by_play || [];
             if (plays.length > 0) {
               for (let j = 0; j < plays.length; j++) {
                 const p = plays[j];
+                // Update arena with current action for animation
+                setArenaState((prev) => prev ? { ...prev, action: p.action } : prev);
                 addLines([
                   { type: "output", text: `  [${p.time}] ${p.action}` },
                 ]);
-                // Spread moments across ~30s per round
                 const momentDelay = Math.floor(28000 / plays.length);
                 await delay(momentDelay);
               }
             } else {
-              // Fallback if no play_by_play
               addLines([{ type: "output", text: `  ${r.highlight}` }]);
+              setArenaState((prev) => prev ? { ...prev, action: r.highlight } : prev);
               await delay(6000);
             }
 
-            // End of round
             if (isFinishRound && r.round < totalRounds) {
-              // Fight ended early
+              setArenaState((prev) => prev ? { ...prev, action: "knockout finish stoppage" } : prev);
               addLines([
                 { type: "fight", text: `  🔔 STOPPAGE! Fight is over in Round ${r.round}!` },
               ]);
             } else {
+              setArenaState((prev) => prev ? { ...prev, action: "" } : prev);
               addLines([
                 { type: "system", text: "  🔔 Round over!" },
                 { type: "output", text: `  Scorecard: ${result.fighter_a} ${r.fighter_a_score} - ${r.fighter_b_score} ${result.fighter_b}` },
@@ -407,8 +432,6 @@ const TerminalCLI = () => {
             }
 
             await delay(4000);
-
-            // If fight ended this round, stop showing more rounds
             if (isFinishRound) break;
           }
         }
@@ -418,8 +441,11 @@ const TerminalCLI = () => {
         await delay(2000);
 
         if (result.winner === "DRAW") {
+          setArenaState((prev) => prev ? { ...prev, action: "" } : prev);
           addLines([{ type: "fight", text: "  📊 RESULT: DRAW" }]);
         } else {
+          // Show victory/defeat poses
+          setArenaState((prev) => prev ? { ...prev, action: `${result.winner} wins victory celebration` } : prev);
           addLines([
             { type: "fight", text: `  🏆 WINNER: ${result.winner}` },
             { type: "fight", text: `  💥 Method: ${result.method} (Round ${result.finish_round})` },
@@ -440,7 +466,12 @@ const TerminalCLI = () => {
             await delay(1500);
           }
         }
+
+        // Deactivate arena after fight
+        await delay(2000);
+        setArenaState(null);
       } catch (e: any) {
+        setArenaState(null);
         addLines([{ type: "error", text: `  Fight simulation failed: ${e.message || "Unknown error"}` }]);
       }
 
@@ -658,6 +689,19 @@ const TerminalCLI = () => {
           <span className="text-muted-foreground">v1.0.0</span>
         </div>
       </div>
+
+      {/* Pixel Fight Arena - sticky during fights */}
+      {arenaState && (
+        <div className="shrink-0 border-b border-border">
+          <FightArena
+            fighterAName={arenaState.fighterAName}
+            fighterBName={arenaState.fighterBName}
+            currentAction={arenaState.action}
+            round={arenaState.round}
+            isActive={arenaState.isActive}
+          />
+        </div>
+      )}
 
       {/* Terminal body */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 pb-0">
