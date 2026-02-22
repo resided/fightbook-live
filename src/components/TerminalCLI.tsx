@@ -355,40 +355,91 @@ const TerminalCLI = () => {
         if (error) throw error;
         if (result?.error) throw new Error(result.error);
 
-        const lines: HistoryEntry[] = [
-          { type: "system", text: "" },
-        ];
+        const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-        // Round-by-round
+        addLines([{ type: "system", text: "" }]);
+
+        // Play-by-play round by round (~36s per round = ~3 min total)
+        const totalRounds = result.rounds?.length || 5;
+        const finishRound = result.finish_round || totalRounds;
+
         if (result.rounds) {
-          result.rounds.forEach((r: any) => {
-            lines.push({ type: "system", text: `  ─── Round ${r.round} ───────────────────────────────` });
-            lines.push({ type: "output", text: `  ${r.highlight}` });
-            lines.push({ type: "output", text: `  Scorecard: ${result.fighter_a} ${r.fighter_a_score} - ${r.fighter_b_score} ${result.fighter_b}` });
-          });
+          for (let i = 0; i < result.rounds.length; i++) {
+            const r = result.rounds[i];
+            const isFinishRound = r.round === finishRound && result.method !== "Unanimous Decision" && result.method !== "Split Decision";
+
+            addLines([
+              { type: "fight", text: `\n  ══════════════════ ROUND ${r.round} ══════════════════` },
+              { type: "system", text: "  🔔 Round begins!" },
+            ]);
+
+            await delay(2000);
+
+            // Play-by-play moments with delays
+            const plays = r.play_by_play || [];
+            if (plays.length > 0) {
+              for (let j = 0; j < plays.length; j++) {
+                const p = plays[j];
+                addLines([
+                  { type: "output", text: `  [${p.time}] ${p.action}` },
+                ]);
+                // Spread moments across ~30s per round
+                const momentDelay = Math.floor(28000 / plays.length);
+                await delay(momentDelay);
+              }
+            } else {
+              // Fallback if no play_by_play
+              addLines([{ type: "output", text: `  ${r.highlight}` }]);
+              await delay(6000);
+            }
+
+            // End of round
+            if (isFinishRound && r.round < totalRounds) {
+              // Fight ended early
+              addLines([
+                { type: "fight", text: `  🔔 STOPPAGE! Fight is over in Round ${r.round}!` },
+              ]);
+            } else {
+              addLines([
+                { type: "system", text: "  🔔 Round over!" },
+                { type: "output", text: `  Scorecard: ${result.fighter_a} ${r.fighter_a_score} - ${r.fighter_b_score} ${result.fighter_b}` },
+              ]);
+            }
+
+            await delay(4000);
+
+            // If fight ended this round, stop showing more rounds
+            if (isFinishRound) break;
+          }
         }
 
-        // Result
-        lines.push({ type: "fight", text: "\n  ═══════════════════════════════════════════════════" });
+        // Final result
+        addLines([{ type: "fight", text: "\n  ═══════════════════════════════════════════════════" }]);
+        await delay(2000);
+
         if (result.winner === "DRAW") {
-          lines.push({ type: "fight", text: "  📊 RESULT: DRAW" });
+          addLines([{ type: "fight", text: "  📊 RESULT: DRAW" }]);
         } else {
-          lines.push({ type: "fight", text: `  🏆 WINNER: ${result.winner}` });
-          lines.push({ type: "fight", text: `  💥 Method: ${result.method} (Round ${result.finish_round})` });
+          addLines([
+            { type: "fight", text: `  🏆 WINNER: ${result.winner}` },
+            { type: "fight", text: `  💥 Method: ${result.method} (Round ${result.finish_round})` },
+          ]);
         }
-        lines.push({ type: "fight", text: "  ═══════════════════════════════════════════════════" });
+        addLines([{ type: "fight", text: "  ═══════════════════════════════════════════════════" }]);
 
-        // Narration
+        // Narration after result
         if (result.narration) {
-          lines.push({ type: "system", text: "" });
-          lines.push({ type: "system", text: "  ─── FIGHT NARRATION ─────────────────────────────" });
+          await delay(3000);
+          addLines([
+            { type: "system", text: "" },
+            { type: "system", text: "  ─── POST-FIGHT ANALYSIS ─────────────────────────" },
+          ]);
           const narrationLines = result.narration.split("\n");
-          narrationLines.forEach((l: string) => {
-            lines.push({ type: "output", text: `  ${l}` });
-          });
+          for (const l of narrationLines) {
+            addLines([{ type: "output", text: `  ${l}` }]);
+            await delay(1500);
+          }
         }
-
-        addLines(lines);
       } catch (e: any) {
         addLines([{ type: "error", text: `  Fight simulation failed: ${e.message || "Unknown error"}` }]);
       }
